@@ -31,12 +31,38 @@ exports.getList = async (req, res) => {
       req.query.limit ? (req.query.limit == undefined ? 5 : req.query.limit) : 5
     );
     if (isNaN(datalimit)) {
-      datalimit = 5;
+      datalimit = 5;    }
+    
+    // Build search conditions
+    let whereClause = { org_id: req.org_id };
+    let searchConditions = [];
+    
+    // Add search functionality
+    if (req.query.search && req.query.search.trim() !== '') {
+      const searchTerm = req.query.search.trim();
+      searchConditions.push({
+        [Op.or]: [
+          { start_time: { [Op.like]: `%${searchTerm}%` } },
+          { end_time: { [Op.like]: `%${searchTerm}%` } },
+          { '$service_details.name_service$': { [Op.like]: `%${searchTerm}%` } }
+        ]
+      });
     }
-    const { count, rows } = await ServiceSchedule.findAndCountAll({
-      where: { org_id: req.org_id },
-    });
-    SlotModal = await ServiceSchedule.findAll({
+
+    // Add service filter
+    if (req.query.service_id && req.query.service_id !== '') {
+      searchConditions.push({ service_id: req.query.service_id });
+    }
+
+    // Add weekday filter
+    if (req.query.weekday && req.query.weekday !== '') {
+      searchConditions.push({ weekday: req.query.weekday });
+    }
+    
+    // Combine all conditions
+    if (searchConditions.length > 0) {
+      whereClause[Op.and] = searchConditions;
+    }const { count, rows } = await ServiceSchedule.findAndCountAll({
       attributes: [
         "id",
         "service_id",
@@ -62,7 +88,7 @@ exports.getList = async (req, res) => {
           "updatedAt",
         ],
       ],
-      where: { org_id: req.org_id },
+      where: whereClause,
       order: [["id", "DESC"]],
       limit: datalimit,
       offset: offsetdata,
@@ -74,6 +100,8 @@ exports.getList = async (req, res) => {
         },
       ],
     });
+    
+    const SlotModal = rows;
     if (SlotModal === null) {
       res.json({ status: 0, message: langCommon.nodatafound });
     } else {
