@@ -36,9 +36,7 @@ exports.getList = async (req, res) => {
     // Build search conditions
     let whereClause = { org_id: req.org_id };
     let searchConditions = [];    // Add search functionality
-    if (req.query.search && req.query.search.trim() !== '') {
-      const searchTerm = req.query.search.trim().toLowerCase();
-      console.log('🔍 Recherche term:', searchTerm);
+    if (req.query.search && req.query.search.trim() !== '') {      const searchTerm = req.query.search.trim().toLowerCase();
       
       // Mapping des jours en français vers les numéros avec recherche partielle
       const dayMapping = {
@@ -55,11 +53,7 @@ exports.getList = async (req, res) => {
           { end_time: { [Op.like]: `%${searchTerm}%` } },
           { '$service_details.name_service$': { [Op.like]: `%${searchTerm}%` } },
           { interval: { [Op.like]: `%${searchTerm}%` } }
-        ]
-      };
-      
-      console.log('🕐 Recherche par durée avec terme:', searchTerm);
-      console.log('🔍 Condition interval:', { interval: { [Op.like]: `%${searchTerm}%` } });
+        ]      };
       
       // Recherche partielle pour les jours de la semaine
       const matchingDays = [];
@@ -68,14 +62,10 @@ exports.getList = async (req, res) => {
           matchingDays.push(dayMapping[day]);
         }
       });
-      
-      if (matchingDays.length > 0) {
-        console.log('📅 Jours détectés pour "' + searchTerm + '":', matchingDays);
+        if (matchingDays.length > 0) {
         // Ajouter une condition OR pour tous les jours qui matchent
         searchCondition[Op.or].push({ weekday: { [Op.in]: matchingDays } });
-      }
-      
-      console.log('🔍 Search condition:', JSON.stringify(searchCondition, null, 2));
+      }      
       searchConditions.push(searchCondition);
     }
 
