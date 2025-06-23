@@ -35,18 +35,48 @@ exports.getList = async (req, res) => {
     
     // Build search conditions
     let whereClause = { org_id: req.org_id };
-    let searchConditions = [];
-    
-    // Add search functionality
+    let searchConditions = [];    // Add search functionality
     if (req.query.search && req.query.search.trim() !== '') {
-      const searchTerm = req.query.search.trim();
-      searchConditions.push({
+      const searchTerm = req.query.search.trim().toLowerCase();
+      console.log('🔍 Recherche term:', searchTerm);
+      
+      // Mapping des jours en français vers les numéros avec recherche partielle
+      const dayMapping = {
+        'dimanche': '1', 'sunday': '1',
+        'lundi': '2', 'monday': '2', 
+        'mardi': '3', 'tuesday': '3',
+        'mercredi': '4', 'wednesday': '4',
+        'jeudi': '5', 'thursday': '5',
+        'vendredi': '6', 'friday': '6',
+        'samedi': '7', 'saturday': '7'
+      };      const searchCondition = {
         [Op.or]: [
           { start_time: { [Op.like]: `%${searchTerm}%` } },
           { end_time: { [Op.like]: `%${searchTerm}%` } },
-          { '$service_details.name_service$': { [Op.like]: `%${searchTerm}%` } }
+          { '$service_details.name_service$': { [Op.like]: `%${searchTerm}%` } },
+          { interval: { [Op.like]: `%${searchTerm}%` } }
         ]
+      };
+      
+      console.log('🕐 Recherche par durée avec terme:', searchTerm);
+      console.log('🔍 Condition interval:', { interval: { [Op.like]: `%${searchTerm}%` } });
+      
+      // Recherche partielle pour les jours de la semaine
+      const matchingDays = [];
+      Object.keys(dayMapping).forEach(day => {
+        if (day.toLowerCase().startsWith(searchTerm)) {
+          matchingDays.push(dayMapping[day]);
+        }
       });
+      
+      if (matchingDays.length > 0) {
+        console.log('📅 Jours détectés pour "' + searchTerm + '":', matchingDays);
+        // Ajouter une condition OR pour tous les jours qui matchent
+        searchCondition[Op.or].push({ weekday: { [Op.in]: matchingDays } });
+      }
+      
+      console.log('🔍 Search condition:', JSON.stringify(searchCondition, null, 2));
+      searchConditions.push(searchCondition);
     }
 
     // Add service filter
