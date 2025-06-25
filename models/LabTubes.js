@@ -74,8 +74,8 @@ const LabTube = sequelize.define(
   {
     tableName: "labs_tube",
     timestamps: true,
-    // paranoid: true,   // adds deletedAt (soft delete)
-   deletedAt: 'deletedAt'
+     paranoid: true,  
+  // deletedAt: 'deletedAt'
   }
 );
 
