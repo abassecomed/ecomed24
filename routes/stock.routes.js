@@ -16,8 +16,4 @@ router.get('/logs',VerifyToken, stockController.getStockAdjustments);
 router.get('/logs/:stockId',VerifyToken, stockController.getStockAdjustmentsByStockId);
 router.get("/sheet", stockController.downloadSheet);
 
-
-
-
-
 module.exports = router;
