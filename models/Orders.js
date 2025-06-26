@@ -2,8 +2,8 @@ const { DataTypes } = require("sequelize");
 const { sequelize } = require("../config");
 const Patient = require("./Patient");
 
-const SampleManagement = sequelize.define(
-  "SampleManagement",
+const Order = sequelize.define(
+  "Order",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -20,25 +20,17 @@ const SampleManagement = sequelize.define(
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
     },
-    sample_type: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
     test_type: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    priority: {
+    priority_level: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    notes: {
-      type: DataTypes.STRING,
+    status: {
+      type: DataTypes.INTEGER, //0='pending',1='complete', 2='rejected'
       allowNull: true,
-    },
-     status:{
-       type:DataTypes.INTEGER,
-       allowNull:true, 
     },
     added_by: {
       type: DataTypes.INTEGER,
@@ -50,11 +42,11 @@ const SampleManagement = sequelize.define(
     },
   },
   {
-    tableName: "sample_managements",
+    tableName: "orders",
     timestamps: true,
     paranoid: true,
     // deletedAt: 'deletedAt'
   }
 );
-SampleManagement.belongsTo(Patient, {foreignKey:'patient_id', as:'patient'});
-module.exports = SampleManagement;
+Order.belongsTo(Patient, { foreignKey: "patient_id", as: "patient" });
+module.exports = Order;
