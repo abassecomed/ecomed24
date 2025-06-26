@@ -126,6 +126,7 @@ const prescriptionRoutes = require("./routes/prescription.routes");
 const PrescriptionSalesRoutes = require("./routes/prescription-sales.routes");
 const labTubesRoutes=require("./routes/lab-tubes.routes");
 const sampleManagementRoutes=require("./routes/sample-management.routes")
+const orderRoutes=require("./routes/orders.routes");
 
 if (app.get("env") === "production") {
   app.use(morgan("combined"));
@@ -184,6 +185,7 @@ app.use("/prescription-sales", PrescriptionSalesRoutes);
 app.use("/api/depense-types", require("./routes/depenseType.routes"));
 app.use("/lab-tubes",labTubesRoutes);
 app.use("/sample-management",sampleManagementRoutes);
+app.use("/orders",orderRoutes);
 
 // Start server
 const PORT = process.env.PORT || 2001;

@@ -31,6 +31,7 @@ exports.getList = async (req, res) => {
         "test_type",
         "priority",
         "notes",
+        "status",
         "added_by",
         "updated_by",
       ],
@@ -86,13 +87,21 @@ exports.getByID = async (req, res) => {
 
 exports.add = async (req, res) => {
   try {
-    const { patient_id, sample_type, test_type, priority, notes } = req.body;
+    const { patient_id, sample_type, test_type, priority, notes ,status} = req.body;
+      const patient = await Patient.findByPk(patient_id);
+    if (!patient) {
+      return res.status(404).json({
+        status: 0,
+        message: "Invalid patient ID. Patient not found.",
+      });
+    }
     const newData = await SampleManagement.create({
       patient_id,
       sample_type,
       test_type,
       priority,
       notes,
+      status:0,
       added_by: req.userId,
     });
 
@@ -113,12 +122,13 @@ exports.update = async (req, res) => {
     if (!existing) {
       return res.status(404).json({ status: 0, message: "Data not found." });
     }
-    const { sample_type, test_type, priority, notes, patient_id } = req.body;
+    const { sample_type, test_type, priority, notes, patient_id,status } = req.body;
     await existing.update({
       sample_type,
       test_type,
       priority,
       notes,
+      status,
       patient_id,
       updated_by: req.userId,
     });
@@ -156,7 +166,7 @@ exports.status = async (req, res) => {
       return res.status(404).json({ status: 0, message: "Data not found." });
     }
     existing.status = status;
-    existing.updated_by = req.user.id;
+    existing.updated_by = req.userId;
     await existing.save();
     res.json({ status: 1, message: "Status updated successfully." });
   } catch (error) {
