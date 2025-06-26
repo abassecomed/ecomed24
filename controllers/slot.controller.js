@@ -31,12 +31,58 @@ exports.getList = async (req, res) => {
       req.query.limit ? (req.query.limit == undefined ? 5 : req.query.limit) : 5
     );
     if (isNaN(datalimit)) {
-      datalimit = 5;
+      datalimit = 5;    }
+    
+    // Build search conditions
+    let whereClause = { org_id: req.org_id };
+    let searchConditions = [];    // Add search functionality
+    if (req.query.search && req.query.search.trim() !== '') {      const searchTerm = req.query.search.trim().toLowerCase();
+      
+      // Mapping des jours en français vers les numéros avec recherche partielle
+      const dayMapping = {
+        'dimanche': '1', 'sunday': '1',
+        'lundi': '2', 'monday': '2', 
+        'mardi': '3', 'tuesday': '3',
+        'mercredi': '4', 'wednesday': '4',
+        'jeudi': '5', 'thursday': '5',
+        'vendredi': '6', 'friday': '6',
+        'samedi': '7', 'saturday': '7'
+      };      const searchCondition = {
+        [Op.or]: [
+          { start_time: { [Op.like]: `%${searchTerm}%` } },
+          { end_time: { [Op.like]: `%${searchTerm}%` } },
+          { '$service_details.name_service$': { [Op.like]: `%${searchTerm}%` } },
+          { interval: { [Op.like]: `%${searchTerm}%` } }
+        ]      };
+      
+      // Recherche partielle pour les jours de la semaine
+      const matchingDays = [];
+      Object.keys(dayMapping).forEach(day => {
+        if (day.toLowerCase().startsWith(searchTerm)) {
+          matchingDays.push(dayMapping[day]);
+        }
+      });
+        if (matchingDays.length > 0) {
+        // Ajouter une condition OR pour tous les jours qui matchent
+        searchCondition[Op.or].push({ weekday: { [Op.in]: matchingDays } });
+      }      
+      searchConditions.push(searchCondition);
     }
-    const { count, rows } = await ServiceSchedule.findAndCountAll({
-      where: { org_id: req.org_id },
-    });
-    SlotModal = await ServiceSchedule.findAll({
+
+    // Add service filter
+    if (req.query.service_id && req.query.service_id !== '') {
+      searchConditions.push({ service_id: req.query.service_id });
+    }
+
+    // Add weekday filter
+    if (req.query.weekday && req.query.weekday !== '') {
+      searchConditions.push({ weekday: req.query.weekday });
+    }
+    
+    // Combine all conditions
+    if (searchConditions.length > 0) {
+      whereClause[Op.and] = searchConditions;
+    }const { count, rows } = await ServiceSchedule.findAndCountAll({
       attributes: [
         "id",
         "service_id",
@@ -62,7 +108,7 @@ exports.getList = async (req, res) => {
           "updatedAt",
         ],
       ],
-      where: { org_id: req.org_id },
+      where: whereClause,
       order: [["id", "DESC"]],
       limit: datalimit,
       offset: offsetdata,
@@ -74,6 +120,8 @@ exports.getList = async (req, res) => {
         },
       ],
     });
+    
+    const SlotModal = rows;
     if (SlotModal === null) {
       res.json({ status: 0, message: langCommon.nodatafound });
     } else {
