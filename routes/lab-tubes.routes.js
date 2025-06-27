@@ -30,6 +30,6 @@ router.post("/", VerifyToken, upload.single("image"), labTubesController.add);
 router.get("/by-id/:id", VerifyToken, labTubesController.getById);
 router.patch("/update/:id", VerifyToken, upload.single("image"), labTubesController.update);
 router.delete("/delete/:id", VerifyToken, labTubesController.delete);
-//router.patch("/status/:id", VerifyToken, labTubesController.updateStatus);
+router.patch("/status/:id", VerifyToken, labTubesController.status);
 
 module.exports = router;

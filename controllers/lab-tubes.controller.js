@@ -258,3 +258,24 @@ exports.delete = async (req, res) => {
       .json({ status: 0, message: "Delete failed", error: error.message });
   }
 };
+
+exports.status = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { status } = req.body;
+    const existing = await LabTube.findByPk(id);
+    if (!existing) {
+      return res.status(404).json({ status: 0, message: "Data not found." });
+    }
+    existing.status = status;
+    existing.updated_by = req.userId;
+    await existing.save();
+    res.json({ status: 1, message: "Status updated successfully." });
+  } catch (error) {
+    res.status(500).json({
+      status: 0,
+      message: "Status update failed.",
+      error: error.message,
+    });
+  }
+};
