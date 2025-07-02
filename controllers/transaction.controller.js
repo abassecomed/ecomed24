@@ -20,7 +20,6 @@ exports.add = async (req, res) => {
       description,
       source,
       transaction_lines,
-      added_by,
     } = req.body;
 
     let parsedLines;

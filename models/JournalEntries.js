@@ -11,11 +11,11 @@ const JournalEntries = sequelize.define(
     },
     transaction_type: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     transaction_date: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     reference: {
       type: DataTypes.STRING,
