@@ -129,6 +129,7 @@ const sampleManagementRoutes=require("./routes/sample-management.routes");
 const orderRoutes=require("./routes/orders.routes");
 const testCatalogRoutes=require("./routes/testCatalog.routes");
 const chartAccountRoutes=require("./routes/chartAccount.routes");
+const transactionRoutes=require("./routes/transaction.routes")
 
 if (app.get("env") === "production") {
   app.use(morgan("combined"));
@@ -190,6 +191,7 @@ app.use("/sample-management",sampleManagementRoutes);
 app.use("/orders", orderRoutes);
 app.use("/test-catalog", testCatalogRoutes);
 app.use('/chart-account', chartAccountRoutes);
+app.use('/transaction',transactionRoutes);
 
 // Start server
 const PORT = process.env.PORT || 2001;
