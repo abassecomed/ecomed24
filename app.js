@@ -125,9 +125,12 @@ const StockRoutes = require("./routes/stock-request.routes");
 const prescriptionRoutes = require("./routes/prescription.routes");
 const PrescriptionSalesRoutes = require("./routes/prescription-sales.routes");
 const labTubesRoutes=require("./routes/lab-tubes.routes");
-const sampleManagementRoutes=require("./routes/sample-management.routes")
+const sampleManagementRoutes=require("./routes/sample-management.routes");
 const orderRoutes=require("./routes/orders.routes");
-const testCatalogRoutes=require("./routes/testCatalog.routes")
+const testCatalogRoutes=require("./routes/testCatalog.routes");
+const chartAccountRoutes=require("./routes/chartAccount.routes");
+const transactionRoutes=require("./routes/transaction.routes");
+const predefineTransaction= require("./routes/predefine-transaction.routes");
 
 if (app.get("env") === "production") {
   app.use(morgan("combined"));
@@ -188,6 +191,9 @@ app.use("/lab-tubes",labTubesRoutes);
 app.use("/sample-management",sampleManagementRoutes);
 app.use("/orders", orderRoutes);
 app.use("/test-catalog", testCatalogRoutes);
+app.use('/chart-account', chartAccountRoutes);
+app.use('/transaction',transactionRoutes);
+app.use('/predefine-transaction', predefineTransaction);
 
 // Start server
 const PORT = process.env.PORT || 2001;
