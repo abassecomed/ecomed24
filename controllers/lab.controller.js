@@ -207,6 +207,7 @@ exports.getActeDemande = async (req, res) => {
             name_service: service ? service.name_service : null,
             id_specialite: category.id_spe,
             name_specialite: specialite ? specialite.name_specialite : null,
+            code_specialite: specialite ? specialite.code_specialite : null,
             id_prestation: category.id,
             prestation: category.prestation,
             id_organisation: payment.id_organisation,
@@ -1048,8 +1049,37 @@ exports.envoiPdf = async (req, res) => {
     const mailOptions = {
       from: "no-reply@ecomed24.com",
       to: email,
-      subject: "Votre fichier PDF",
-      html: "Voici votre fichier PDF en pièce jointe.",
+      subject: "Vos résultats d’analyses sont disponibles",
+      html: `
+    <div style="font-family: Arial, sans-serif; background: #f4f8fb; padding: 30px;">
+      <div style="max-width: 600px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(16,78,117,0.08); overflow: hidden;">
+        <div style="background: #104E75; padding: 24px 32px;">
+          <h2 style="color: #fff; margin: 0;">Laboratoire d'Analyse Médicale</h2>
+        </div>
+        <div style="padding: 32px;">
+          <p style="color: #104E75; font-size: 18px; margin-bottom: 16px;">
+            Bonjour,
+          </p>
+          <p style="color: #333; font-size: 16px;">
+            Veuillez trouver en pièce jointe vos résultats d’analyses de laboratoire.<br>
+            Merci de votre confiance.
+          </p>
+          <div style="margin: 32px 0; text-align: center;">
+            <span style="display: inline-block; background: #64821C; color: #fff; padding: 12px 32px; border-radius: 24px; font-size: 16px;">
+              Résultats en pièce jointe
+            </span>
+          </div>
+          <p style="color: #888; font-size: 14px;">
+            Si vous avez des questions, n’hésitez pas à nous contacter.<br>
+            <b style="color: #104E75;">Ecomed24</b>
+          </p>
+        </div>
+        <div style="background: #64821C; padding: 12px 32px; text-align: center;">
+          <span style="color: #fff; font-size: 14px;">&copy; 2025 Ecomed24</span>
+        </div>
+      </div>
+    </div>
+  `,
       attachments: [
         {
           filename: fileName,
@@ -1080,6 +1110,7 @@ exports.envoiPdf = async (req, res) => {
     }
   });
 };
+
 
 
 // Add this function to your controller file

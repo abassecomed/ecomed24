@@ -2618,3 +2618,31 @@ exports.getActeDemandeAutresActes = async (req, res) => {
       .send("Une erreur s'est produite lors de la récupération des données");
   }
 };
+
+// Endpoint pour récupérer les partenaires d'un partenariat santé à partir d'une organisation d'origine
+exports.getPartenairesSanteByOrigine = async (req, res) => {
+  try {
+    const id_organisation_origin = req.params.id_organisation_origin;
+    const partenaires = await Database.query(
+      `SELECT partenariat_sante.id_organisation_destinataire, organisation.nom 
+      FROM partenariat_sante 
+      JOIN organisation ON partenariat_sante.id_organisation_destinataire = organisation.id
+      WHERE partenariat_sante.id_organisation_origin = :id_organisation_origin`,
+      {
+        replacements: { id_organisation_origin },
+        type: Database.QueryTypes.SELECT,
+      }
+    );
+    res.json({
+      status: 1,
+      message: "Liste des partenaires santé pour l'organisation d'origine",
+      data: partenaires,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 0,
+      message: "Erreur lors de la récupération des partenaires santé",
+      error: error.message,
+    });
+  }
+};

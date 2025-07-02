@@ -43,7 +43,6 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("✅ Utilisateur connecté :", socket.id);
 
   socket.on("join_room", (room) => {
     socket.join(room);
@@ -124,6 +123,7 @@ const StockRoute = require("./routes/stock.routes");
 const StockRoutes = require("./routes/stock-request.routes");
 const prescriptionRoutes = require("./routes/prescription.routes");
 const PrescriptionSalesRoutes = require("./routes/prescription-sales.routes");
+
 const labTubesRoutes=require("./routes/lab-tubes.routes");
 const sampleManagementRoutes=require("./routes/sample-management.routes");
 const orderRoutes=require("./routes/orders.routes");
@@ -131,6 +131,8 @@ const testCatalogRoutes=require("./routes/testCatalog.routes");
 const chartAccountRoutes=require("./routes/chartAccount.routes");
 const transactionRoutes=require("./routes/transaction.routes");
 const predefineTransaction= require("./routes/predefine-transaction.routes");
+const Invoice = require("./routes/invoice.routes");
+
 
 if (app.get("env") === "production") {
   app.use(morgan("combined"));
@@ -186,6 +188,7 @@ app.use("/stock", StockRoute);
 app.use("/stock-request", StockRoutes);
 app.use("/prescriptions", prescriptionRoutes);
 app.use("/prescription-sales", PrescriptionSalesRoutes);
+app.use("/invoice", Invoice);
 app.use("/api/depense-types", require("./routes/depenseType.routes"));
 app.use("/lab-tubes",labTubesRoutes);
 app.use("/sample-management",sampleManagementRoutes);
@@ -198,7 +201,7 @@ app.use('/predefine-transaction', predefineTransaction);
 // Start server
 const PORT = process.env.PORT || 2001;
 server.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+ // console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`🚀 Serveur API + Socket.IO lancé sur http://localhost:${PORT}`);
 });
 

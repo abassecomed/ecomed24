@@ -62,6 +62,7 @@ const Docmosis = require("../helpers/DocmosisHelper");
 var Transaction = require("../models/Transaction");
 var Drug = require("../models/Drug");
 var Prelevement = require("../models/Prelevement");
+var InvoiceItem = require("../models/InvoiceItem");
 //////Modal Relationship
 
 Patient.belongsTo(Region, { as: "region_details", foreignKey: "region" });
@@ -1936,7 +1937,6 @@ exports.getPaymentDetailsInvoicePayments = async (req, res) => {
     // Construction de la requête SQL en fonction du type d'organisation
     let query = "";
     const id_organisation = req.org_id;
-
     if (organisationType === "IPM") {
       query = `
         SELECT 
@@ -2460,8 +2460,7 @@ exports.getDependantByID = async (req, res) => {
 };
 exports.addDependant = async (req, res) => {
   try {
-    let getData = [],
-      getRelationData = [],
+    let getRelationData = [],
       results;
     const { count, rows } = await Patient.findAndCountAll({
       where: { id_organisation: req.org_id },
@@ -4795,6 +4794,9 @@ exports.addClinicalNotes = async (req, res) => {
         body_mass_index: vitalSignData.body_mass_index,
         ion_user_id: req.userId,
         add_date: moment(vitalSignData.add_date).format("YYYY-MM-DD"),
+        patient_name: "",
+        patient_address: "",
+        patient_phone: "",
         date_string: moment().format("DD-MM-YYYY"),
         date: moment().unix(),
         added_by: req.userId,
@@ -4856,11 +4858,11 @@ exports.addClinicalNotes = async (req, res) => {
       });
     };
 
-    if(labData){
+    if (labData) {
       await handleLabOrImagingData(labData, "lab");
     }
-    
-    if(imagingData){
+
+    if (imagingData) {
       await handleLabOrImagingData(imagingData, "imaging");
     }
     // Handle Prescription
@@ -5653,18 +5655,18 @@ exports.getLabTestList = async (req, res) => {
   try {
     let search = req.query.search;
 
-    if(search){
+    if (search) {
       LabTestList = await Database.query(
         `SELECT payment_category.id,payment_category.prestation,setting_service.code_service FROM setting_service LEFT JOIN setting_service_specialite ON setting_service.idservice=setting_service_specialite.id_service LEFT JOIN payment_category ON setting_service.idservice=payment_category.id_service where code_service='labo' and payment_category.prestation LIKE '%${search}%' LIMIT 50;`,
         { type: Database.QueryTypes.SELECT }
       );
-    }else{
+    } else {
       LabTestList = await Database.query(
         "SELECT payment_category.id,payment_category.prestation,setting_service.code_service FROM setting_service LEFT JOIN setting_service_specialite ON setting_service.idservice=setting_service_specialite.id_service LEFT JOIN payment_category ON setting_service.idservice=payment_category.id_service where code_service='labo'  LIMIT 50",
         { type: Database.QueryTypes.SELECT }
       );
     }
-    
+
     if (LabTestList === null) {
       res.json({ status: 0, message: langCommon.nodatafound });
     } else {
@@ -6913,7 +6915,9 @@ exports.createServiceRequestWithInstances = async (req, res) => {
     typeAssurance,
     category_name_assurance,
     etatlight,
-    charge_mutuelle
+    charge_mutuelle,
+    organisation_destinataire,
+    partnerTraitantID
   } = req.body;
 
   console.log("Les paiements reçus:", req.body);
@@ -6952,7 +6956,10 @@ exports.createServiceRequestWithInstances = async (req, res) => {
       typeAssurance,
       category_name_assurance,
       etatlight,
-      charge_mutuelle
+      charge_mutuelle,
+      category_name_pro,
+      organisation_destinataire,
+      partnerTraitantID
     });
 
     if (!newServiceRequest) {
@@ -6973,7 +6980,7 @@ exports.createServiceRequestWithInstances = async (req, res) => {
       priceProduct: instance.priceProduct,
       lastModifiedBy: req.userId,
       prix_assurance: instance.prix_assurance,
-      charge_mutuelle : instance.charge_mutuelle
+      charge_mutuelle: instance.charge_mutuelle,
     }));
 
     const newServiceInstances = await ServiceInstance.bulkCreate(
@@ -7030,7 +7037,7 @@ exports.createServiceRequestWithInstances = async (req, res) => {
       deposit_type: deposit_type || "Cash",
       bulletinAnalyse: "----",
       organisation_light_origin: partenaireID,
-      organisation_destinataire: partenaireID,
+      organisation_destinataire: partnerTraitantID,
       service: service || 1,
       user: req.userId,
       patient_name: `${patient.last_name} ${patient.name}`,
@@ -7047,11 +7054,18 @@ exports.createServiceRequestWithInstances = async (req, res) => {
     };
 
     // 🔹 Étape 5 : Gestion des cas "Assurance" et "Light"
-    if (typeAssurance) {
+    if (etat == "1") {
       console.log("🔍 Type détecté recuperer :", typeAssurance);
       paymentData.category_name_assurance = categoryName;
       paymentData.etat_assurance = 1;
       paymentData.organisation_assurance = partenaireID;
+    }
+
+    if (type == "Sous-Traitant-Partner") {
+      console.log("🔍 Type détecté recuperer :", typeAssurance);
+      paymentData.category_name_pro = categoryName;
+      paymentData.etat = 1;
+      paymentData.organisation_destinataire = partnerTraitantID;
     }
 
     if (etatlight) {
@@ -7059,8 +7073,6 @@ exports.createServiceRequestWithInstances = async (req, res) => {
       paymentData.etatlight = 1;
       paymentData.organisation_light_origin = partenaireID;
     }
-
- 
 
     // 🔹 Étape 6 : Création du paiement
     const newPayment = await Payment.create(paymentData);
@@ -7088,7 +7100,6 @@ exports.createServiceRequestWithInstances = async (req, res) => {
 
     // 🔹 Étape 7 : Création des transactions pour chaque prestation
     if (typeAssurance) {
-
       const transactionsData = instances.map((instance) => ({
         id_payment: newPayment.id,
         id_prestation_organisation: instance.productID,
@@ -7107,15 +7118,33 @@ exports.createServiceRequestWithInstances = async (req, res) => {
         updatedAt: Sequelize.literal("NOW()"),
       }));
 
+      const invoiceItemsData = instances.map((instance) => ({
+        // PAS de invoice_id ici !
+        description: instance.description || "",
+        beneficiaire: patientID,
+        reference: instance.reference || "",
+        quantity: instance.quantity || 1,
+        unit_price: instance.priceProduct,
+        total: instance.priceProduct * (instance.quantity || 1),
+        service_code: instance.productID || "",
+        statut: "LIBRE", // ou valeur par défaut
+        payer_patient: instance.priceProduct,
+        doit_payer_partenaire: instance.prix_assurance || 0,
+        chargeMutuelle: instance.charge_mutuelle || 0,
+        organisation_origine: instance.organisationID,
+        organisation_destinataire: partenaireID,
+        type: "TiersPayant",
+      }));
+      await InvoiceItem.bulkCreate(invoiceItemsData);
+
       const newTransactions = await Transaction.bulkCreate(transactionsData);
-
     } else if (etatlight) {
-
       const transactionsData = instances.map((instance) => ({
         id_payment: newPayment.id,
         id_prestation_organisation: instance.productID,
         amount: instance.priceProduct,
         to_Pay: instance.priceProduct,
+        doit_payer_partenaire: instance.priceProduct || 0,
         id_patient_payeur: patientID,
         id_patient_parent: patientID,
         id_organisation_origine: organisationID,
@@ -7128,6 +7157,25 @@ exports.createServiceRequestWithInstances = async (req, res) => {
       }));
 
       const newTransactions = await Transaction.bulkCreate(transactionsData);
+      // Création des InvoiceItem pour les prestations partenaires (type Partenaire)
+      const invoiceItemsData = instances.map((instance) => ({
+        // PAS de invoice_id ici !
+        description: instance.description || "",
+        beneficiaire: patientID,
+        reference: instance.reference || "",
+        quantity: instance.quantity || 1,
+        unit_price: instance.priceProduct,
+        total: instance.priceProduct * (instance.quantity || 1),
+        service_code: instance.productID || "",
+        statut: "LIBRE",
+        organisation_origine: organisationID,
+        organisation_destinataire: partenaireID,
+        payer_patient: instance.priceProduct,
+        doit_payer_partenaire: instance.priceProduct, // Pour le partenaire, la part assurance est 0
+        chargeMutuelle: 0, // Pas de mutuelle ici
+        type: "Sous-Traitance",
+      }));
+      await InvoiceItem.bulkCreate(invoiceItemsData);
     }
 
     // **Étape 5 : Récupération des infos de l'organisation**
