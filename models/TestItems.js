@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config").sequelize;
+const TestRequests=require("./TestRequests");
 
 const TestItems = sequelize.define(
   "TestItems",
@@ -33,7 +34,10 @@ const TestItems = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-
+    price:{
+      type:DataTypes.FLOAT,
+      allowNull:true,
+    },
     status: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -54,3 +58,4 @@ const TestItems = sequelize.define(
 );
 
 module.exports = TestItems;
+//TestItems.belongsTo(TestRequests, { foreignKey: "request_id" });

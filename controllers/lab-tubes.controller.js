@@ -4,6 +4,8 @@ var LabTube = require("../models/LabTubes");
 LabTube.belongsTo(User, { as: "addedby_details", foreignKey: "added_by" });
 LabTube.belongsTo(User, { as: "updatedby_details", foreignKey: "updated_by" });
 const { sequelize } = require("../config");
+const BASEURL = process.env.SITE_URL;
+
 
 exports.getList = async (req, res) => {
   try {
@@ -76,7 +78,86 @@ exports.getList = async (req, res) => {
   }
 };
 
-// KEEPING ORIGINAL add API INTACT
+// exports.add = async (req, res) => {
+//   try {
+//     const {
+//       name,
+//       color_code,
+//       additive,
+//       volume,
+//       tube_type,
+//       material,
+//       cap_type,
+//       storage_temperature,
+//       expiration_period,
+//       barcode,
+//       notes,
+//       status = 1,
+//     } = req.body;
+
+//     if (!name || !tube_type || !material) {
+//       return res.status(400).json({
+//         status: 0,
+//         message: "Name, tube type, and material are required fields.",
+//       });
+//     }
+
+//     if (barcode) {
+//       const existingTube = await LabTube.findOne({ where: { barcode } });
+//       if (existingTube) {
+//         return res.status(400).json({
+//           status: 0,
+//           message: "Lab tube with this barcode already exists.",
+//         });
+//       }
+//     }
+
+//     let image_url = null;
+//     if (req.file) {
+//       image_url = req.file.filename;
+//     }
+
+//     const newLabTube = await LabTube.create({
+//       name,
+//       color_code,
+//       additive,
+//       volume,
+//       tube_type,
+//       material,
+//       cap_type,
+//       storage_temperature,
+//       expiration_period,
+//       barcode,
+//       image: image_url,
+//       notes,
+//       status,
+//       added_by: req.userId,
+//     });
+
+//     if (newLabTube === null) {
+//       res.json({
+//         status: 0,
+//         message: "Error during add lab tubes",
+//         data: "",
+//       });
+//     } else {
+//       res.json({
+//         status: 1,
+//         message: "Lab tubes added successfully",
+//         data: [newLabTube],
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Error adding lab tube:", error);
+//     return res.status(500).json({
+//       status: 0,
+//       message: "Failed to add lab tube.",
+//       error: error.message,
+//     });
+//   }
+// };
+
+
 exports.add = async (req, res) => {
   try {
     const {
@@ -113,7 +194,7 @@ exports.add = async (req, res) => {
 
     let image_url = null;
     if (req.file) {
-      image_url = req.file.filename;
+      image_url = `${BASEURL}/uploads/lab-tubes/${req.file.filename}`;
     }
 
     const newLabTube = await LabTube.create({
@@ -133,19 +214,11 @@ exports.add = async (req, res) => {
       added_by: req.userId,
     });
 
-    if (newLabTube === null) {
-      res.json({
-        status: 0,
-        message: "Error during add lab tubes",
-        data: "",
-      });
-    } else {
-      res.json({
-        status: 1,
-        message: "Lab tubes added successfully",
-        data: [newLabTube],
-      });
-    }
+    res.json({
+      status: 1,
+      message: "Lab tubes added successfully",
+      data: [newLabTube],
+    });
   } catch (error) {
     console.error("Error adding lab tube:", error);
     return res.status(500).json({
@@ -155,7 +228,6 @@ exports.add = async (req, res) => {
     });
   }
 };
-
 exports.getById = async (req, res) => {
   try {
     const tube = await LabTube.findByPk(req.params.id, {
