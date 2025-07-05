@@ -113,7 +113,7 @@ exports.add = async (req, res) => {
 
     let image_url = null;
     if (req.file) {
-      image_url = `$/uploads/lab-tubes/${req.file.filename}`;
+      image_url = `${BASEURL}/uploads/lab-tubes/${req.file.filename}`;
     }
 
     const newLabTube = await LabTube.create({
