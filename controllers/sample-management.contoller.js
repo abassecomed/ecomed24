@@ -1,4 +1,5 @@
 const SampleManagement = require("../models/SampleManagement");
+const SampleStatusLog = require("../models/SampleStatusLog");
 const Patient = require("../models/Patient");
 const User = require("../models/User");
 
@@ -87,8 +88,9 @@ exports.getByID = async (req, res) => {
 
 exports.add = async (req, res) => {
   try {
-    const { patient_id, sample_type, test_type, priority, notes ,status} = req.body;
-      const patient = await Patient.findByPk(patient_id);
+    const { patient_id, sample_type, test_type, priority, notes, status } =
+      req.body;
+    const patient = await Patient.findByPk(patient_id);
     if (!patient) {
       return res.status(404).json({
         status: 0,
@@ -101,7 +103,7 @@ exports.add = async (req, res) => {
       test_type,
       priority,
       notes,
-      status:0,
+      status: 0,
       added_by: req.userId,
     });
 
@@ -122,7 +124,8 @@ exports.update = async (req, res) => {
     if (!existing) {
       return res.status(404).json({ status: 0, message: "Data not found." });
     }
-    const { sample_type, test_type, priority, notes, patient_id,status } = req.body;
+    const { sample_type, test_type, priority, notes, patient_id, status } =
+      req.body;
     await existing.update({
       sample_type,
       test_type,
@@ -161,14 +164,31 @@ exports.status = async (req, res) => {
   try {
     const id = req.params.id;
     const { status } = req.body;
+
+    const validStatuses = [0, 1, 2, 3, 4];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        status: 0,
+        message: "Invalid status value. Must be between 0 and 4.",
+      });
+    }
     const existing = await SampleManagement.findByPk(id);
     if (!existing) {
       return res.status(404).json({ status: 0, message: "Data not found." });
     }
+    const oldStatus = existing.status;
     existing.status = status;
     existing.updated_by = req.userId;
     await existing.save();
-    res.json({ status: 1, message: "Status updated successfully." });
+
+    await SampleStatusLog.create({
+      sample_management_id: id,
+      old_status: oldStatus,
+      new_status: status,
+      updated_by: req.userId,
+    });
+
+    res.json({ status: 1, message: "Status updated and logged successfully." });
   } catch (error) {
     res.status(500).json({
       status: 0,
