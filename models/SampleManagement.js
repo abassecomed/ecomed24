@@ -38,6 +38,7 @@ const SampleManagement = sequelize.define(
     },
      status:{
        type:DataTypes.INTEGER,
+       defaultValue:0, //0=sample collection , 1=Accessioning, 2=Analysis, 3=Verification, 4=Reporting,
        allowNull:true, 
     },
     added_by: {
