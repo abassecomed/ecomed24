@@ -51,7 +51,7 @@ exports.getByID = async (req, res) => {
     const test = await TestCatalog.findByPk(req.params.id);
 
     if (!test) {
-      return res.json({ status: 0, message: "Test not found" });
+      return res.status(404).json({ status: 0, message: "Test not found" });
     }
 
     res.json({ status: 1, message: "Test retrieved", data: test });
@@ -149,7 +149,7 @@ exports.status = async (req, res) => {
 exports.addLabTest = async (req, res) => {
   try {
     let getData = [], results;
-    const reports = req.body.reports; // ✅ no JSON.parse
+    const reports = req.body.reports; 
 
     const PatientModal = await Patient.findOne({
       where: { id: req.body.patient_id },
@@ -160,7 +160,7 @@ exports.addLabTest = async (req, res) => {
       org_id: req.org_id,
       type: "lab",
       advice: req.body.advice,
-      reports: reports, // ✅ no parse
+      reports: reports, 
       status: 0,
       added_by: req.userId,
     });
