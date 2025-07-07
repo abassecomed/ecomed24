@@ -51,7 +51,7 @@ exports.getByID = async (req, res) => {
     const test = await TestCatalog.findByPk(req.params.id);
 
     if (!test) {
-      return res.json({ status: 0, message: "Test not found" });
+      return res.status(404).json({ status: 0, message: "Test not found" });
     }
 
     res.json({ status: 1, message: "Test retrieved", data: test });
