@@ -343,3 +343,4 @@ exports.getLabTestByID = async (req, res) => {
     res.status(500).json({ status: 0, message: "Server error", error });
   }
 };
+ 

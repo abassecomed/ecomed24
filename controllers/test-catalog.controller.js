@@ -149,7 +149,7 @@ exports.status = async (req, res) => {
 exports.addLabTest = async (req, res) => {
   try {
     let getData = [], results;
-    const reports = req.body.reports; // ✅ no JSON.parse
+    const reports = req.body.reports; 
 
     const PatientModal = await Patient.findOne({
       where: { id: req.body.patient_id },
@@ -160,7 +160,7 @@ exports.addLabTest = async (req, res) => {
       org_id: req.org_id,
       type: "lab",
       advice: req.body.advice,
-      reports: reports, // ✅ no parse
+      reports: reports, 
       status: 0,
       added_by: req.userId,
     });
