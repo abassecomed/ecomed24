@@ -57,6 +57,40 @@ const LabTube = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    closure_type:{
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    sterile:{
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: true,
+    },
+    vacuum_type:{
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    diameter_mm:{
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    length_mm:{
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    label_type:{
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    centrifuge_safe:{
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: true,
+    },
+    preferred_tests:{
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

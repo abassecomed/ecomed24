@@ -30,12 +30,9 @@ const TransactionLine = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    debit_amount: {
+    amount:{
       type: DataTypes.FLOAT,
-      defaultValue: 0.0,
-    },
-    credit_amount: {
-      type: DataTypes.FLOAT,
+      allowNull: false,
       defaultValue: 0.0,
     },
     added_by: {

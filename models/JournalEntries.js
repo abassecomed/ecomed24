@@ -29,6 +29,11 @@ const JournalEntries = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    status:{
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0, // 0=pending, 1=Approved, 2=Rejected
+    },
     added_by: {
       type: DataTypes.INTEGER,
       allowNull: true,

@@ -6,7 +6,6 @@ LabTube.belongsTo(User, { as: "updatedby_details", foreignKey: "updated_by" });
 const { sequelize } = require("../config");
 const BASEURL = process.env.SITE_URL;
 
-
 exports.getList = async (req, res) => {
   try {
     let offset = parseInt(req.query.offset ?? 0);
@@ -46,6 +45,14 @@ exports.getList = async (req, res) => {
         "barcode",
         "image",
         "notes",
+        "closure_type",
+        "sterile",
+        "vacuum_type",
+        "diameter_mm",
+        "length_mm",
+        "label_type",
+        "centrifuge_safe",
+        "preferred_tests",
         "status",
         "added_by",
         "updated_by",
@@ -91,6 +98,13 @@ exports.add = async (req, res) => {
       expiration_period,
       barcode,
       notes,
+      closure_type,
+      sterile,
+      vacuum_type,
+      diameter_mm,
+      label_type,
+      centrifuge_safe,
+      preferred_tests,
       status = 1,
     } = req.body;
 
@@ -129,6 +143,13 @@ exports.add = async (req, res) => {
       barcode,
       image: image_url,
       notes,
+      closure_type,
+      sterile,
+      vacuum_type,
+      diameter_mm,
+      label_type,
+      centrifuge_safe,
+      preferred_tests,
       status,
       added_by: req.userId,
     });
@@ -164,6 +185,13 @@ exports.getById = async (req, res) => {
         "barcode",
         "image",
         "notes",
+        "closure_type",
+        "sterile",
+        "vacuum_type",
+        "diameter_mm",
+        "label_type",
+        "centrifuge_safe",
+        "preferred_tests",
         "status",
         "added_by",
         "updated_by",
