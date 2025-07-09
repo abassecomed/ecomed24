@@ -57,6 +57,7 @@ exports.add = async (req, res) => {
         reference,
         description,
         source,
+        status: 0,
         added_by: req.userId,
         lines: parsedLines.map((line) => ({
           ...line,
@@ -189,3 +190,29 @@ exports.delete = async (req, res) => {
     });
   }
 };
+
+exports.status=async (req, res)=>{
+  try {
+    const id = req.params.id;
+    const { status } = req.body;
+
+    const transaction = await JournalEntries.findByPk(id);
+    if (!transaction) {
+      return res.status(404).json({ status: 0, message: "Transaction not found" });
+    }
+
+    await transaction.update({
+      status,
+      updated_by: req.userId,
+    });
+
+    res.json({ status: 1, message: "Transaction status updated successfully" });
+  } catch (error) {
+    console.error("Status update error:", error);
+    res.status(500).json({
+      status: 0,
+      message: "Error updating transaction status",
+      error: error.message
+    });
+  }
+}
