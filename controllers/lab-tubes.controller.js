@@ -16,8 +16,7 @@ exports.getList = async (req, res) => {
     let where = {};
     if (search) {
       where[Sequelize.Op.or] = [
-        { name: { [Sequelize.Op.like]: `%${search}%` } },
-        { tube_type: { [Sequelize.Op.like]: `%${search}%` } },
+        { type: { [Sequelize.Op.like]: `%${search}%` } },
         { material: { [Sequelize.Op.like]: `%${search}%` } },
         { barcode: { [Sequelize.Op.like]: `%${search}%` } },
       ];
@@ -33,13 +32,11 @@ exports.getList = async (req, res) => {
       where,
       attributes: [
         "id",
-        "name",
-        "color_code",
+        "type",
+        "cap_color",
         "additive",
-        "volume",
-        "tube_type",
+        "volume_ml",
         "material",
-        "cap_type",
         "storage_temperature",
         "expiration_period",
         "barcode",
@@ -87,13 +84,11 @@ exports.getList = async (req, res) => {
 exports.add = async (req, res) => {
   try {
     const {
-      name,
-      color_code,
+      type,
+      cap_color,
       additive,
-      volume,
-      tube_type,
+      volume_ml,
       material,
-      cap_type,
       storage_temperature,
       expiration_period,
       barcode,
@@ -107,13 +102,6 @@ exports.add = async (req, res) => {
       preferred_tests,
       status = 1,
     } = req.body;
-
-    if (!name || !tube_type || !material) {
-      return res.status(400).json({
-        status: 0,
-        message: "Name, tube type, and material are required fields.",
-      });
-    }
 
     if (barcode) {
       const existingTube = await LabTube.findOne({ where: { barcode } });
@@ -131,13 +119,11 @@ exports.add = async (req, res) => {
     }
 
     const newLabTube = await LabTube.create({
-      name,
-      color_code,
+      type,
+      cap_color,
       additive,
-      volume,
-      tube_type,
+      volume_ml,
       material,
-      cap_type,
       storage_temperature,
       expiration_period,
       barcode,
@@ -173,13 +159,11 @@ exports.getById = async (req, res) => {
     const tube = await LabTube.findByPk(req.params.id, {
       attributes: [
         "id",
-        "name",
-        "color_code",
+        "type",
+        "cap_color",
         "additive",
-        "volume",
-        "tube_type",
+        "volume_ml",
         "material",
-        "cap_type",
         "storage_temperature",
         "expiration_period",
         "barcode",
