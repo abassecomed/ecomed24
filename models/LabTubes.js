@@ -9,11 +9,11 @@ const LabTube = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    name: {
+    type:{
       type: DataTypes.STRING,
       allowNull: true,
     },
-    color_code: {
+    cap_color: {
       type: DataTypes.STRING,
       allowNull:true,
     },
@@ -21,19 +21,11 @@ const LabTube = sequelize.define(
      type:DataTypes.STRING,
      allowNull:true,   
     },
-    volume:{
+    volume_ml:{
         type:DataTypes.FLOAT,
         allowNull:true,
     },
-    tube_type:{
-        type:DataTypes.STRING,
-        allowNull:true,
-    },
     material:{
-        type:DataTypes.STRING,
-        allowNull:true,
-    },
-    cap_type:{
         type:DataTypes.STRING,
         allowNull:true,
     },
@@ -46,6 +38,10 @@ const LabTube = sequelize.define(
         allowNull:true,
     },
     barcode:{
+        type:DataTypes.STRING,
+        allowNull:true,
+    },
+    qr_code:{
         type:DataTypes.STRING,
         allowNull:true,
     },

@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../config");
 const JournalEntries = require("./JournalEntries");
+const ChartAccount = require("./ChartAccount");
 
 const TransactionLine = sequelize.define(
   "TransactionLine",
@@ -22,10 +23,14 @@ const TransactionLine = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    account_name: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
+   chart_account_id: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+  references: {
+    model: ChartAccount,
+    key: "id",
+  },
+},
     memo: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -34,6 +39,11 @@ const TransactionLine = sequelize.define(
       type: DataTypes.FLOAT,
       allowNull: false,
       defaultValue: 0.0,
+    },
+    status:{
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0, // 0=pending, 1=Approved, 2=Rejected
     },
     added_by: {
       type: DataTypes.INTEGER,
@@ -51,7 +61,6 @@ const TransactionLine = sequelize.define(
   }
 );
 
-// Associations
 JournalEntries.hasMany(TransactionLine, {
   foreignKey: "transaction_id",
   as: "lines",
@@ -60,6 +69,10 @@ JournalEntries.hasMany(TransactionLine, {
 TransactionLine.belongsTo(JournalEntries, {
   foreignKey: "transaction_id",
   as: "transaction",
+});
+TransactionLine.belongsTo(ChartAccount, {
+  foreignKey: "chart_account_id",
+  as: "chart_account",
 });
 
 module.exports = TransactionLine;
