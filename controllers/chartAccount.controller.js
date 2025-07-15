@@ -14,6 +14,7 @@ exports.getList = async (req, res) => {
           attributes: ["id", "code", "name", "type", "parent_account"],
         },
       ],
+      order: [["id", "DESC"]],
       attributes: [
         "id",
         "code",

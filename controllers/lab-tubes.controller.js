@@ -113,7 +113,7 @@ exports.add = async (req, res) => {
       }
     }
 
-    let image_url = null;
+    let image_url= null;
     if (req.file) {
       image_url = `${BASEURL}/uploads/${req.file.filename}`;
     }

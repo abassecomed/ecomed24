@@ -1,5 +1,6 @@
 const JournalEntries = require("../models/JournalEntries");
 const TransactionLine = require("../models/TransactionLine");
+const ChartAccount = require("../models/ChartAccount");
 const User = require("../models/User");
 
 JournalEntries.belongsTo(User, {
@@ -23,7 +24,6 @@ exports.add = async (req, res) => {
     } = req.body;
 
     let parsedLines;
-    console.log(typeof transaction_lines, "transaction_lines")
 
     if (Array.isArray(transaction_lines)) {
       parsedLines = transaction_lines;
@@ -50,6 +50,24 @@ exports.add = async (req, res) => {
       });
     }
 
+    for (const [index, line] of parsedLines.entries()) {
+      const chartId = Number(line.chart_account_id);
+      if (!Number.isInteger(chartId)) {
+        return res.status(400).json({
+          status: 0,
+          message: `Invalid chart_account_id at index ${index}`,
+        });
+      }
+
+      const chart = await ChartAccount.findByPk(chartId);
+      if (!chart) {
+        return res.status(400).json({
+          status: 0,
+          message: `chart_account_id ${chartId} not found at index ${index}`,
+        });
+      }
+    }
+
     const transaction = await JournalEntries.create(
       {
         transaction_type,
@@ -69,7 +87,34 @@ exports.add = async (req, res) => {
       }
     );
 
-    res.json({ status: 1, message: "Transaction added", data: transaction });
+    const fullTransaction = await JournalEntries.findByPk(transaction.id, {
+      include: [
+        {
+          model: TransactionLine,
+          as: "lines",
+          include: [
+            { model: ChartAccount, as: "chart_account" },
+            {
+              model: JournalEntries,
+              as: "transaction",
+              attributes: [
+                "id",
+                "transaction_type",
+                "transaction_date",
+                "reference",
+                "source",
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    res.json({
+      status: 1,
+      message: "Transaction added",
+      data: fullTransaction,
+    });
   } catch (error) {
     console.error("Error adding transaction:", error);
     res.status(500).json({
@@ -80,82 +125,140 @@ exports.add = async (req, res) => {
   }
 };
 
-
 exports.getList = async (req, res) => {
   try {
     let offsetdata = parseInt(req.query.offset ?? 0);
     offsetdata = isNaN(offsetdata) || offsetdata < 0 ? 0 : offsetdata;
     let datalimit = parseInt(req.query.limit ?? 5);
     datalimit = isNaN(datalimit) || datalimit <= 0 ? 5 : datalimit;
-    const {count, rows} = await JournalEntries.findAndCountAll({
-      include: [{ model: TransactionLine, as: "lines"}],
+
+    const { count, rows } = await TransactionLine.findAndCountAll({
+      include: [
+        {
+          model: ChartAccount,
+          as: "chart_account",
+        },
+        {
+          model: JournalEntries,
+          as: "transaction",
+          attributes: [
+            "id",
+            "transaction_type",
+            "transaction_date",
+            "reference",
+            "source",
+          ],
+        },
+      ],
+
+      limit: datalimit,
+      offset: offsetdata,
       order: [["id", "DESC"]],
       distinct: true,
     });
-    res.json({ status: 1, data: rows,total:count });
+
+    res.json({ status: 1, data: rows, total: count });
   } catch (error) {
-    res
-      .status(500)
-      .json({ status: 0, message: "Error fetching transactions", error });
+    console.error("List fetch error:", error);
+    res.status(500).json({
+      status: 0,
+      message: "Error fetching transactions",
+      error: error.message,
+    });
   }
 };
-
 
 exports.getById = async (req, res) => {
   try {
     const id = req.params.id;
     const transaction = await JournalEntries.findByPk(id, {
-      include: [{ model: TransactionLine, as: "lines" }],
+      include: [
+        {
+          model: TransactionLine,
+          as: "lines",
+          include: [
+            {
+              model: ChartAccount,
+              as: "chart_account",
+            },
+          ],
+        },
+      ],
     });
+
     if (!transaction)
       return res.status(404).json({ status: 0, message: "Not found" });
 
     res.json({ status: 1, data: transaction });
   } catch (error) {
-    res
-      .status(500)
-      .json({ status: 0, message: "Error fetching transaction", error });
+    console.error("Get by ID error:", error);
+    res.status(500).json({
+      status: 0,
+      message: "Error fetching transaction",
+      error: error.message,
+    });
   }
 };
 
 exports.update = async (req, res) => {
   try {
     const id = req.params.id;
-    const {
-      transaction_type,
-      transaction_date,
-      reference,
-      description,
-      source,
-      transaction_lines,
-    } = req.body;
+    const { chart_account_id, description, reference, amount, transaction } =
+      req.body;
 
-    const transaction = await JournalEntries.findByPk(id);
-    if (!transaction)
-      return res.status(404).json({ status: 0, message: "Not found" });
+    const transactionLine = await TransactionLine.findByPk(id);
+    if (!transactionLine) {
+      return res
+        .status(404)
+        .json({ status: 0, message: "Transaction line not found" });
+    }
 
-    await transaction.update({
-      transaction_type,
-      transaction_date,
-      reference,
-      description,
-      source,
-      updated_by: req.userId, 
-    });
-
-    if (transaction_lines && Array.isArray(transaction_lines)) {
-      await TransactionLine.destroy({ where: { transaction_id: id } });
-
-      for (const line of transaction_lines) {
-        await TransactionLine.create({
-          ...line,
-          transaction_id: id,
-          added_by: req.userId,
-        });
+    if (chart_account_id) {
+      const chart = await ChartAccount.findByPk(chart_account_id);
+      if (!chart) {
+        return res
+          .status(400)
+          .json({ status: 0, message: "Chart account not found" });
       }
     }
 
-    res.json({ status: 1, message: "Transaction updated" });
+    await transactionLine.update({
+      chart_account_id,
+      description,
+      reference,
+      amount,
+      updated_by: req.userId,
+    });
+
+    if (transaction) {
+      await JournalEntries.update(
+        { ...transaction, updated_by: req.userId },
+        { where: { id: transactionLine.transaction_id } }
+      );
+    }
+
+    const updatedData = await TransactionLine.findByPk(id, {
+      include: [
+        { model: ChartAccount, as: "chart_account" },
+        {
+          model: JournalEntries,
+          as: "transaction",
+          attributes: [
+            "id",
+            "transaction_type",
+            "transaction_date",
+            "reference",
+            "source",
+          ],
+        },
+      ],
+    });
+
+    res.json({
+      status: 1,
+      message: "Transaction updated successfully",
+      data: updatedData,
+    });
   } catch (error) {
     console.error("Update error:", error);
     res.status(500).json({
@@ -165,18 +268,19 @@ exports.update = async (req, res) => {
     });
   }
 };
-
 exports.delete = async (req, res) => {
   try {
     const id = req.params.id;
 
     const transaction = await JournalEntries.findByPk(id);
     if (!transaction) {
-      return res.status(404).json({ status: 0, message: "Transaction not found" });
+      return res
+        .status(404)
+        .json({ status: 0, message: "Transaction not found" });
     }
 
     await TransactionLine.destroy({
-      where: { transaction_id: id }
+      where: { transaction_id: id },
     });
     await transaction.destroy();
 
@@ -186,19 +290,21 @@ exports.delete = async (req, res) => {
     res.status(500).json({
       status: 0,
       message: "Error deleting transaction",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-exports.status=async (req, res)=>{
+exports.status = async (req, res) => {
   try {
     const id = req.params.id;
     const { status } = req.body;
 
-    const transaction = await JournalEntries.findByPk(id);
+    const transaction = await TransactionLine.findByPk(id);
     if (!transaction) {
-      return res.status(404).json({ status: 0, message: "Transaction not found" });
+      return res
+        .status(404)
+        .json({ status: 0, message: "Transaction not found" });
     }
 
     await transaction.update({
@@ -212,7 +318,7 @@ exports.status=async (req, res)=>{
     res.status(500).json({
       status: 0,
       message: "Error updating transaction status",
-      error: error.message
+      error: error.message,
     });
   }
-}
+};

@@ -7,6 +7,7 @@ router.get("/get-patients", VerifyToken, helperController.getPatients);
 router.get("/get-doctors", VerifyToken, helperController.getDoctorsList);
 router.get("/get-doctors-list/:service_id", VerifyToken, helperController.getDoctorsListByServiceID);
 router.get("/get-services", VerifyToken, helperController.getServicesList);
+router.get("/chart-account", VerifyToken, helperController.getChartAccount);
 
 // Country
 router.get("/get-country-list", VerifyToken, helperController.getCountryList);

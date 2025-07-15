@@ -41,6 +41,10 @@ const LabTube = sequelize.define(
         type:DataTypes.STRING,
         allowNull:true,
     },
+    qr_code:{
+        type:DataTypes.STRING,
+        allowNull:true,
+    },
     image:{
         type:DataTypes.STRING,
         allowNull:true,

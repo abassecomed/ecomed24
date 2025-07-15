@@ -30,6 +30,8 @@ var crypto = require("crypto");
 var Email = require("../models/Email");
 var AutoEmailTemplate = require("../models/AutoEmailTemplate");
 const User = require("../models/User");
+const ChartAccount = require("../models/ChartAccount");
+
 const BASEURL = process.env.SITE_URL;
 const BASEPATH = process.env.BASE_PATH;
 
@@ -102,6 +104,54 @@ exports.getPatients = async (req, res) => {
     throw error;
   }
 };
+
+exports.getChartAccount = async (req, res) => {
+  try {
+    let offsetdata = parseInt(req.query.offset ?? 0);
+    offsetdata = isNaN(offsetdata) || offsetdata < 0 ? 0 : offsetdata;
+    let datalimit = parseInt(req.query.limit ?? 5);
+    datalimit = isNaN(datalimit) || datalimit <= 0 ? 5 : datalimit;
+    const { count, rows } = await ChartAccount.findAndCountAll({
+      include: [
+        {
+          model: ChartAccount,
+          as: "parent",
+          attributes: ["id", "code", "name", "type", "parent_account"],
+        },
+      ],
+       order: [["id", "DESC"]],
+      attributes: [
+        "id",
+        "code",
+        "name",
+        "type",
+        "parent_account",
+        "added_by",
+        "updated_by",
+      ],
+    });
+    
+    if (rows.length === 0) {
+      res.json({
+        status: 0,
+        message: "No chart account data available",
+      });
+    } else {
+      res.json({
+        status: 1,
+        message: "Chart account list retrieved successfully",
+        data: rows,
+        total: count,
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching lab tubes:", error);
+    res
+      .status(500)
+      .json({ status: 0, message: "Server error", error: error.message });
+  }
+};
+
 exports.getDoctorsList = async (req, res) => {
   try {
     let getData = [];
