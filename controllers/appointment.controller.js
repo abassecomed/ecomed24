@@ -244,8 +244,8 @@ exports.getList = async (req, res) => {
       where: whereClause,
       order: [["id", "DESC"]],
       limit: datalimit,
-      offset: offsetdata,
-    });
+      offset: offsetdata,    });
+    
     const formattedData = AppointmentModal.map((appointment) => ({
       id: appointment.id,
       title: appointment.servicename,
@@ -283,6 +283,164 @@ exports.getList = async (req, res) => {
     }
   } catch (error) {
     throw error;
+  }
+};
+
+// 🎯 Nouvelle fonction pour filtrage avancé SCRUM-106
+exports.getListFiltered = async (req, res) => {
+  try {
+    let offsetdata = parseInt(
+      req.query.offset
+        ? req.query.offset == undefined || req.query.offset == 1
+          ? 0
+          : req.query.offset
+        : 0
+    );
+    if (isNaN(offsetdata)) {
+      offsetdata = 0;
+    }
+    let datalimit = parseInt(
+      req.query.limit ? (req.query.limit == undefined ? 5 : req.query.limit) : 50
+    );
+    if (isNaN(datalimit)) {
+      datalimit = 50;
+    }    // Récupération des paramètres de filtrage
+    const {
+      doctor_id,
+      department_id,
+      time_slot,
+      type = "month",
+      currentDate = moment().format("YYYY-MM-DD"),
+      direction = null
+    } = req.query;
+
+    // Gestion des dates comme dans getList
+    const baseDate = moment(currentDate, "YYYY-MM-DD");
+    let startDate, endDate, updatedCurrentDate;
+
+    switch (type) {
+      case "month":
+        updatedCurrentDate = direction === "next" 
+          ? baseDate.clone().add(1, "month")
+          : direction === "previous" 
+          ? baseDate.clone().subtract(1, "month")
+          : baseDate.clone();
+        startDate = updatedCurrentDate.clone().startOf("month").format("YYYY-MM-DD");
+        endDate = updatedCurrentDate.clone().endOf("month").format("YYYY-MM-DD");
+        break;
+      case "week":
+        updatedCurrentDate = direction === "next" 
+          ? baseDate.clone().add(1, "week")
+          : direction === "previous" 
+          ? baseDate.clone().subtract(1, "week")
+          : baseDate.clone();
+        startDate = updatedCurrentDate.clone().startOf("week").format("YYYY-MM-DD");
+        endDate = updatedCurrentDate.clone().endOf("week").format("YYYY-MM-DD");
+        break;
+      case "day":
+        updatedCurrentDate = direction === "next" 
+          ? baseDate.clone().add(1, "day")
+          : direction === "previous" 
+          ? baseDate.clone().subtract(1, "day")
+          : baseDate.clone();
+        startDate = updatedCurrentDate.clone().startOf("day").format("YYYY-MM-DD");
+        endDate = updatedCurrentDate.clone().endOf("day").format("YYYY-MM-DD");
+        break;
+      default:
+        updatedCurrentDate = baseDate.clone();
+        startDate = updatedCurrentDate.clone().startOf("day").format("YYYY-MM-DD");
+        endDate = updatedCurrentDate.clone().endOf("day").format("YYYY-MM-DD");
+    }
+
+    // Construction de la clause WHERE avec filtres
+    const whereClause = {
+      id_organisation: req.org_id,
+      appointment_date: {
+        [Sequelize.Op.between]: [startDate, endDate],
+      },
+    };    // 🎯 Ajout des filtres avancés
+    if (doctor_id) {
+      whereClause.doctor = doctor_id; // Utiliser le champ 'doctor' au lieu de 'added_by'
+    }
+    
+    if (department_id) {
+      whereClause.service = department_id; // Champ pour le département/service
+    }    // Pour les créneaux horaires
+    if (time_slot === "early_morning") {
+      whereClause.s_time = { [Sequelize.Op.between]: ["06:00", "08:00"] };
+    } else if (time_slot === "morning") {
+      whereClause.s_time = { [Sequelize.Op.between]: ["08:00", "12:00"] };
+    } else if (time_slot === "afternoon") {
+      whereClause.s_time = { [Sequelize.Op.between]: ["12:00", "16:00"] };
+    } else if (time_slot === "late_afternoon") {
+      whereClause.s_time = { [Sequelize.Op.between]: ["16:00", "18:00"] };
+    } else if (time_slot === "evening") {
+      whereClause.s_time = { [Sequelize.Op.between]: ["18:00", "20:00"] };
+    } else if (time_slot === "night") {
+      whereClause.s_time = { [Sequelize.Op.between]: ["20:00", "22:00"] };    }
+
+    const AppointmentModal = await Appointment.findAll({
+      attributes: [
+        "id",
+        "id_organisation",
+        "patientname",
+        "doctor", // 🎯 Ajouter le champ doctor
+        "date",
+        "time_slot",
+        "s_time",
+        "e_time",
+        "service",
+        "servicename",
+        "remarks",
+        "status",
+        "appointment_date",
+        "tele_consultation",
+        "room_id",
+        "live_meeting_link",
+        [
+          Sequelize.fn(
+            "DATE_FORMAT",
+            Sequelize.col("Appointment.appointment_date"),
+            "%d/%m/%Y"
+          ),
+          "appointment_date_formatted",
+        ],
+        "added_by",
+        "updated_by",
+      ],
+      where: whereClause,      order: [["id", "DESC"]],
+      limit: datalimit,
+      offset: offsetdata,
+    });
+    
+    console.log('🎯 Premier rendez-vous pour debug:', AppointmentModal[0]?.dataValues);
+
+    const formattedData = AppointmentModal.map((appointment) => ({
+      id: appointment.id,
+      title: appointment.servicename || "Service",
+      patient_name: `${appointment.patientname} (${appointment.appointment_date_formatted})`,
+      start: `${appointment.appointment_date}T${appointment.s_time}:00`,
+      end: `${appointment.appointment_date}T${appointment.e_time}:00`,
+      doctor_id: appointment.doctor, // 🎯 Le vrai ID du médecin
+      doctor_name: appointment.doctor, // 🎯 Utiliser le même champ
+      service_id: appointment.service,
+      service_name: appointment.servicename,
+      status: appointment.status,
+      tele_consultation: appointment.tele_consultation,
+      room_id: appointment.room_id,
+      live_meeting_link: appointment.live_meeting_link,
+    }));    res.json({
+      status: 1,
+      message: `Rendez-vous filtrés récupérés`,
+      data: formattedData,
+      title: startDate + " - " + endDate,
+      currentDate: updatedCurrentDate.format("YYYY-MM-DD"),
+      total: formattedData.length,
+      filters_applied: { doctor_id, department_id, time_slot }
+    });
+  } catch (error) {
+    console.error('Erreur filtrage:', error);
+    res.json({ status: 0, message: "Erreur lors du filtrage", error: error.message });
   }
 };
 

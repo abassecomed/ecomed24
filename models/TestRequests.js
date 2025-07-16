@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config").sequelize;
-
+const TestItems=require("./TestItems");
+const Patient=require("./Patient")
 const TestRequests = sequelize.define(
   "TestRequests",
   {
@@ -55,5 +56,8 @@ const TestRequests = sequelize.define(
     timestamps: true, // Disable Sequelize's default timestamps
   }
 );
+
+TestRequests.hasMany(TestItems, { foreignKey: "request_id", as:'test_items' });
+TestRequests.belongsTo(Patient, { foreignKey: "patient_id", as:'patient' });
 
 module.exports = TestRequests;

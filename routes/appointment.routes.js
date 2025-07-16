@@ -5,6 +5,7 @@ const appointmentController = require("../controllers/appointment.controller");
 
 // appointmentt
 router.get("/", VerifyToken, appointmentController.getList);
+router.get("/filtered", VerifyToken, appointmentController.getListFiltered); // 🎯 Nouvelle route SCRUM-106
 router.get("/by-id/:appointment_id", appointmentController.getByID);
 router.post("/add", VerifyToken, appointmentController.add);
 router.post("/update/:appointment_id", VerifyToken, appointmentController.update);
