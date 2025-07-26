@@ -58,6 +58,8 @@ router.post(
   );
 // Endpoint pour récupérer les partenaires santé d'une organisation d'origine
 router.get('/partenaires-sante/:id_organisation_origin', organizationController.getPartenairesSanteByOrigine);
+router.get('/users-by-id/:id_user', organizationController.getUserById);
+router.get('/by-id/:id', organizationController.getOrganisationById);
 
 
 // router.get('/get-price-grid-by/:gridID',VerifyToken, organizationController.getPriceGridDetailByGridID);

@@ -2646,3 +2646,78 @@ exports.getPartenairesSanteByOrigine = async (req, res) => {
     });
   }
 };
+
+exports.getUserById = async (req, res) => {
+  try {
+    const id_user = req.params.id_user;
+
+    const user = await Database.query(
+      `SELECT 
+         u.id, 
+         u.first_name AS prenom, 
+         u.last_name AS nom, 
+         u.email
+       FROM users u
+       WHERE u.id = :id_user`,
+      {
+        replacements: { id_user },
+        type: Database.QueryTypes.SELECT,
+      }
+    );
+
+    if (user.length === 0) {
+      return res.status(404).json({
+        status: 0,
+        message: "Utilisateur non trouvé",
+      });
+    }
+
+    res.json({
+      status: 1,
+      message: "Détails utilisateur récupérés",
+      data: user[0],
+    });
+  } catch (error) {
+    console.error("❌ Erreur dans getUserById :", error);
+    res.status(500).json({
+      status: 0,
+      message: "Erreur serveur",
+      error: error.message,
+    });
+  }
+};
+exports.getOrganisationById = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await Database.query(
+      `SELECT * FROM organisation WHERE id = :id`,
+      {
+        replacements: { id },
+        type: Database.QueryTypes.SELECT,
+      }
+    );
+
+    if (!result.length) {
+      return res.status(404).json({
+        status: 0,
+        message: "Organisation non trouvée",
+      });
+    }
+
+    res.json({
+      status: 1,
+      message: "Organisation récupérée avec succès",
+      data: result[0],
+    });
+  } catch (error) {
+    console.error("Erreur getOrganisationById:", error);
+    res.status(500).json({
+      status: 0,
+      message: "Erreur lors de la récupération de l'organisation",
+      error: error.message,
+    });
+  }
+};
+
+
