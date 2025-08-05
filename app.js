@@ -197,7 +197,7 @@ app.use("/test-catalog", testCatalogRoutes);
 app.use('/chart-account', chartAccountRoutes);
 app.use('/transaction',transactionRoutes);
 app.use('/predefine-transaction', predefineTransaction);
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Start server
 const PORT = process.env.PORT || 2001;
 server.listen(PORT, () => {

@@ -22,6 +22,8 @@ const Invoice = sequelize.define(
       defaultValue: "EN ATTENTE DU PAIEMENT",
     },
     notes: { type: DataTypes.TEXT },
+    pdf_path: { type: DataTypes.STRING },
+    email_envoye: { type: DataTypes.STRING }, // Stocke les emails séparés par des
   },
   {
     tableName: "invoices",
